@@ -165,9 +165,6 @@ class FloatingWidget(Gtk.Window):
         return True
 
     def on_draw(self, widget, cr):
-        cr.set_source_rgba(0, 0, 0, 0)
-        cr.paint()
-
         pixbuf = self.frames[self.frame_index]
         scale = self.current_scale
 
@@ -176,7 +173,7 @@ class FloatingWidget(Gtk.Window):
         Gdk.cairo_set_source_pixbuf(cr, pixbuf, 0, 0)
         cr.paint()
         cr.restore()
-        return False
+        return True
 
     def update_frame(self):
         self.current_scale = self.scale
