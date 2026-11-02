@@ -78,6 +78,7 @@ class FloatingWidget(Gtk.Window):
         self.scale = 0.7
         self.base_width = self.frames[0].get_width()
         self.base_height = self.frames[0].get_height()
+        self._scale_cache = {}
 
         self.drawing_area = Gtk.DrawingArea()
         self.drawing_area.set_size_request(
@@ -156,6 +157,7 @@ class FloatingWidget(Gtk.Window):
             self.scale *= 0.95
 
         self.scale = max(0.2, min(self.scale, 3.0))
+        self._scale_cache.clear()
         self.update_frame()
         return True
 
@@ -168,21 +170,23 @@ class FloatingWidget(Gtk.Window):
         cr.set_source_rgba(0, 0, 0, 0)
         cr.paint()
 
-        pixbuf = self.frames[self.frame_index]
-        scale = self.current_scale
-
-        cr.save()
-        cr.scale(scale, scale)
-        Gdk.cairo_set_source_pixbuf(cr, pixbuf, 0, 0)
+        scaled = self.current_scaled_pixbuf
+        Gdk.cairo_set_source_pixbuf(cr, scaled, 0, 0)
         cr.paint()
-        cr.restore()
         return False
 
     def update_frame(self):
         self.current_scale = self.scale
-        w = int(self.base_width * self.scale)
-        h = int(self.base_height * self.scale)
-        self.drawing_area.set_size_request(w, h)
+        cache_key = self.frame_index
+        if cache_key not in self._scale_cache:
+            self._scale_cache[cache_key] = self.frames[self.frame_index].scale_simple(
+                int(self.base_width * self.scale),
+                int(self.base_height * self.scale),
+                GdkPixbuf.InterpType.BILINEAR
+            )
+        scaled = self._scale_cache[cache_key]
+        self.current_scaled_pixbuf = scaled
+        self.drawing_area.set_size_request(scaled.get_width(), scaled.get_height())
         self.drawing_area.queue_draw()
 
 def main():
